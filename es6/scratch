@@ -1,0 +1,822 @@
+/**
+ * Created by joshuabrown on 5/10/16.
+ */
+
+const EventEmitter = require('events').EventEmitter;
+
+class CountDown extends EventEmitter{
+    constructor( seconds, superstitious ){
+        super();
+        this.seconds = seconds;
+        this.superstitious = !!superstitious;
+    }
+    go(){
+        const countdown = this;
+        const timeoutIds = [];
+        return new Promise(function(resolve, reject){
+            for(let i = countdown.seconds; i >= 0; i-- ){
+                timeoutIds.push( setTimeout(function(){
+                        if( countdown.superstitious && i === 13 ){
+                            timeoutIds.forEach( clearTimeout );
+                            return reject( new Error('not counting that one!'));
+                        }
+                        countdown.emit('tick', i );
+                        if( i === 0 ) resolve();
+                }, ( countdown.seconds - i ) * 1000 ) );
+            }
+        });
+    }
+}
+
+function launch (){
+    return new Promise(function( resolve, reject ){
+        console.log('liftoff!');
+        //if( Math.random()>.5 ){
+            // failure condition selected!
+            //reject('broke!');
+            //console.log('it broke!');
+        //}
+        setTimeout(function(){
+            resolve('in orbit!');
+        }, 2*1000 );
+    });
+}
+
+const mission = new CountDown( 5, false )
+    .on( 'tick', function( i ){
+        if( i > 0 ) console.log( i + '...');
+    });
+
+mission.go()
+    .then( launch )
+    .then( function(){
+        console.log('launching!');
+    })
+    .then( function(msg){
+        //console.log('then is happening now!!!');
+        console.log(msg);
+        //msg('in orbit!');
+    })
+    .catch(function(err){
+        console.log('houston, we have a problem', err.message);
+    });
+
+
+//const roles = new Set();
+//roles.add('User');
+//roles.add('Admin');
+//console.log(roles);
+
+//const SecretHolder = (function(){
+//    const secrets = new WeakMap();
+//    return class{
+//        setSecret(secret){
+//            secrets.set(this, secret);
+//        }
+//        getSecret(){
+//            return secrets.get(this);
+//        }
+//    }
+//})();
+//
+//const a = new SecretHolder();
+//const b = new SecretHolder();
+//
+//a.setSecret('secret A');
+//b.setSecret('secret B');
+//
+//console.log(a.getSecret());
+//console.log(b.getSecret());
+
+//const u1 = {name: 'Cynthia'};
+//const u2 = {name: 'Jackson'};
+//const u3 = {name: 'Olive'};
+//const u4 = {name: 'James'};
+//
+//const userRoles = new Map();
+//
+////userRoles.set(u1, 'User');
+////userRoles.set(u2, 'User');
+////userRoles.set(u3, 'Admin');
+//
+//userRoles.set(u1, 'User')
+//    .set(u2, 'User')
+//    .set(u3, 'User');
+//
+//console.log(userRoles.get(u1));
+//console.log(userRoles.get(u2));
+//console.log(userRoles.get(u3));
+//console.log(userRoles.get(u4));
+//console.log(userRoles.size);
+//
+//for(let u of userRoles.keys()) console.log(u.name);
+//
+//for(let ur of userRoles.entries())  console.log(ur.name);
+
+//const fs = require('fs');
+//
+//// this will turn error-first callbacks into promises
+//// based on nfcall from the Q promise library.
+//function nfcall( f, ...args ){  // take in the function and ALL it's arguments with spread operator.
+//    return new Promise( function( resolve, reject ){ // Promise format, resolve and reject will be provided when invoking function.
+//        f.call( null, ...args, function( err,...args ){ // you call( null means that 'this' isn't anything :(, then all the arguments are passed, and you pass a function into it as a final argument,
+//            if( err ) return reject( err );
+//            resolve( args.length < 2 ? args[ 0 ] : args );
+//        });
+//    });
+//}
+//
+//function ptimeout( delay ){
+//    return new Promise( function( resolve, reject ){
+//        setTimeout( resolve, delay ); // old school call back method
+//    });
+//}
+//
+//// generator run, or GRUN based on runGenerator in davidwalsh.name/es6-generators
+//function grun( g ) {
+//    const it = g();
+//    ( function iterate( val ){
+//        const x = it.next( val );
+//        if( !x.done ){
+//            if( x.value instanceof Promise ) {
+//                x.value.then( iterate).catch( err => it.throw( err ));
+//            } else {
+//                setTimeout( iterate, 0, x.value );  //gets underlined, too many arguments!!!
+//            }
+//        }
+//    } )();
+//}
+//
+//function* theFutureIsNow(){
+//    const dataA = yield nfcall(fs.readFile, 'a.txt');
+//    const dataB = yield nfcall(fs.readFile, 'b.txt');
+//    const dataC = yield nfcall(fs.readFile, 'c.txt');
+//    yield ptimeout( 60*1000 );
+//    yield nfcall(fs.writeFile, 'd.txt', dataA + dataB + dataC );
+//}
+//
+//grun( theFutureIsNow() );
+
+//const EventEmitter = require('events').EventEmitter;
+//
+//class Countdown extends EventEmitter{
+//    constructor( seconds, superstitious ){
+//        super();
+//        this.seconds = seconds;
+//        this.superstitious = !!superstitious;
+//    }
+//    go(){
+//        const countdown = this;
+//        const timeoutIds = [];
+//        return new Promise( function ( resolve, reject ){
+//            for( let i = countdown.seconds; i >= 0; i-- ){
+//                timeoutIds.push( setTimeout( function (){
+//                    if( countdown.superstitious && i === 13 ){
+//                        timeoutIds.forEach( clearTimeout ); // this cleverly removes the timeouts!
+//                        return reject( new Error('not going to say it...'));
+//                    }
+//                    countdown.emit( 'tick', i );
+//                    if( i === 0 || i < 0 ) resolve();
+//                }, ( countdown.seconds - i ) * 1000 ) );
+//            }
+//        });
+//    }
+//}
+//
+//const c = new Countdown( 5, true ).on('tick', function( i ){
+//    if( i > 0 ) console.log( i + '...' );
+//});
+//
+//function launch(){
+//    return new Promise( function( resolve, reject ){
+//        if( Math.random() >= 0.5 ) return;
+//        console.log( 'liftoff!' );
+//        setTimeout( function(){
+//            resolve( 'in orbit' );
+//        }, 2000 );
+//    });
+//}
+//
+//// non trivial addition of timeout to a promise
+//function addTimeout( fn, timeout = 1000 ){
+//    return function( ...args ){
+//        return new Promise( function( resolve, reject ){
+//            const tid = setTimeout( reject, timeout, new Error('promise timed out'));
+//            fn(...args )
+//                .then( function(...args){
+//                    clearTimeout( tid );
+//                    resolve(...args);
+//                })
+//                .catch( function(...args ){
+//                    clearTimeout( tid );
+//                    reject(...args);
+//                });
+//        });
+//    };
+//}
+//
+//c.go()
+//    .then( addTimeout( launch, 1000 ))
+//    .then( function( msg ){
+//        console.log( msg );
+//    })
+//    .catch( function ( derp ){
+//        console.error( 'Houston we have a problem...', derp.message );
+//    });
+
+
+//const EventEmitter = require('events').EventEmitter;
+//
+//class Countdown extends EventEmitter{
+//    constructor( seconds, superstitious ){
+//        super();
+//        this.seconds = seconds;
+//        this.superstitious = !!superstitious;
+//    }
+//    go(){
+//        const countdown = this;
+//        const timeoutIds = [];
+//        return new Promise( function ( resolve, reject ){
+//            for( let i = countdown.seconds; i >= 0; i-- ){
+//                timeoutIds.push( setTimeout( function (){
+//                    if( countdown.superstitious && i === 13 ){
+//                        timeoutIds.forEach( clearTimeout ); // this cleverly removes the timeouts!
+//                        return reject( new Error('not going to say it...'));
+//                    }
+//                    countdown.emit( 'tick', i );
+//                    if( i === 0 || i < 0 ) resolve();
+//                }, ( countdown.seconds - i ) * 1000 ) );
+//            }
+//        });
+//    }
+//}
+//
+//const c = new Countdown( 22, true ).on('tick', function( i ){
+//    if( i > 0 ) console.log( i + '...' );
+//});
+//c.go()
+//    .then( function(){
+//        console.log('fulfilled, GO!');
+//    })
+//    .catch( function ( derp ){
+//        console.error( 'cancelled countdown because', derp.message );
+//    });
+//
+
+
+
+//const start = new Date();
+//let i = 0;
+//const intervalId = setInterval( function(){
+//    let now = new Date();
+//    if( now.getMinutes() !== start.getMinutes() || ++i > 2 ){
+//        return clearInterval( intervalId );
+//    }
+//    console.log( `${ i }: ${ now }`);
+//}, 5000 );
+//
+//let countdown_length = 10;
+//let countdown_running = false;
+//let abort = document.getElementById('abort');
+//const count_down = setInterval( function(){
+//    countdown_running = true;
+//    if( --countdown_length <= 0 ){
+//        countdown_running = false;
+//        return clearInterval( count_down );
+//    }
+//    console.log( `${ countdown_length } seconds left!`);
+//}, 1000 );
+//
+//abort.onclick = function(){
+//    if( countdown_running === true ){
+//        countdown_running = false;
+//        clearInterval( count_down );
+//        console.log('countdown aborted!');
+//    }
+//    console.log('aboart clicked');
+//};
+
+//function getRainbowIterator(){
+//    const colors = ['lightgray','darkgray','gray'];
+//    let colorIndex = -1;
+//    return {
+//        next(){
+//            if( ++colorIndex >= colors.length ) colorIndex = 0;
+//            return { value: colors[colorIndex], done: false };
+//        }
+//    };
+//}
+//
+//const rainbowIterator = getRainbowIterator();
+//setInterval( function(){
+//    document.querySelector('.rainbow')
+//        .style['background-color'] = rainbowIterator.next().value;
+//}, 2000 );
+
+//function* rainbow(){
+//    yield 'red';
+//    yield 'orange';
+//}
+//
+//for( let color of rainbow() ){
+//    console.log( color );
+//}
+
+
+//function makeIterator(array){
+//    var nextIndex = 0;
+//
+//    return {
+//        next: function(){
+//            return nextIndex < array.length ?
+//            {value: array[nextIndex++], done: false} :
+//            {done: true};
+//        }
+//    };
+//}
+//
+//const book = [
+//    'Twinkle little bat!',
+//    'How I wonder',
+//    'Upa above the world',
+//    'Like a tea tray in sky',
+//    'Twinkle litte bat',
+//    'How I wonder what your at!'
+//];
+//
+////var it = makeIterator(book);
+//
+//for( let i = 0; i< book.length; i++ ){
+//    console.log( book[ i ]);
+//}
+
+//// iteration protocol allows treating objects like arrays.
+//// however, obj.values() is still not a function, not understanding chapter in text.
+//class Log {
+//    constructor() {
+//        this.messages = [];
+//    }
+//    add( message ){
+//        this.messages.push( { message, timestamp: Date.now() } );
+//    }
+//    [ Symbol.iterator ](){
+//        return this.messages.values();
+//    }
+//}
+//
+//const log = new Log();
+//log.add('arg, first day at sea');
+//log.add('spotted wale');
+//log.add('spotted another whale');
+//log.add('saw another boat');
+//
+//for( let entry of log ){
+//    console.log(`${ entry.message } @ ${ entry.timestamp }`);
+//}
+
+//// Iterators as described in text are broken, check MDN: you have to put it into custom iterator functions like:
+//function makeIterator(array){
+//    var nextIndex = 0;
+//
+//    return {
+//        next: function(){
+//            return nextIndex < array.length ?
+//            {value: array[nextIndex++], done: false} :
+//            {done: true};
+//        }
+//    }
+//}
+//// even in es6 compatible browsers, like firefox.
+
+//const book = [
+//    'Twinkle little bat!',
+//    'How I wonder',
+//    'Upa above the world',
+//    'Like a tea tray in sky',
+//    'Twinkle litte bat',
+//    'How I wonder what your at!'
+//];
+//
+//const it = book.values();
+//
+//console.log( it.next() );
+
+//const u1 = { name:'Cynthia'};
+//const u2 = { name:'Jackson'};
+//const u3 = { name:'Olive'};
+//const u4 = { name:'Jame'};
+//const userRoles = new Map();
+
+//userRoles.set( u1, 'User');
+//userRoles.set( u2, 'User');
+//userRoles.set( u3, 'Admin');
+
+//userRoles // chainable C-C-Combo!
+//    .set( u1, 'User')
+//    .set( u2, 'User')
+//    .set( u3, 'Admin');
+
+//console.log( userRoles.get( u3 ));
+//console.log( userRoles.has( u4 ));
+
+//// keys, values, entries on a map
+//for( let u of userRoles.keys()) console.log(u.name);
+//for( let r of userRoles.values()) console.log(r);
+//for( let s of userRoles.entries())
+//    console.log(`${s[0].name}: ${s[1]}`);
+
+//class Super {
+//    constructor(){
+//        this.name = 'Super';
+//        this.isSuper = true;
+//    }
+//}
+//Super.prototype.sneaky = 'not recommended'; // syntactically valid, but bad idea
+//
+//class Sub extends Super {
+//    constructor(){
+//        super();
+//        this.name = 'Sub';
+//        this.isSub = true;
+//    }
+//}
+//
+//const obj = new Sub();
+//
+//for( let p in obj ){
+//    console.log(`${ p }: ${ obj[ p ] }` +
+//        ( obj.hasOwnProperty( p ) ? '' : ' (inherited)' ) );
+//}
+
+//class Vehicle {
+//    constructor(){
+//        this.passengers = [];
+//        console.log( 'Vehicle created' );
+//    }
+//    addPassenger( p ){
+//        this.passengers.push( p );
+//        console.log( `seated ${ p }` );
+//    }
+//    ejectPassenger( p ){
+//        this.passengers = this.passengers.filter( ( n )=> n !== p );
+//        console.log( `ejected ${ p }` );
+//    }
+//}
+//class Car extends Vehicle {
+//    constructor(){
+//        super(); // invokes the superclass constructor, why we need this, because errors that's why?
+//        console.log( 'Car created');
+//    }
+//    deployAirbags(){
+//        console.log( 'Bwoosh!');
+//    }
+//}
+// Big warning in the firefox browser while running the ES5 transpilation AND pure es6:
+// mutating the [[Prototype]] of an object will cause your code to run very slowly; instead create the object with the correct initial [[Prototype]] value using Object.create
+// no complaints when running the straight es6 code in chrome.
+//const bob = new Car();
+//bob.deployAirbags();
+
+
+//// using WeakMap() to make truly enforce private properties:
+//const Car = (function(){
+//    const carProps = new WeakMap();
+//
+//    class Car {
+//        static getNextVin(){
+//            return Car.nextVin++;
+//        }
+//        constructor( make, model ){
+//            this.make = make;
+//            this.model = model;
+//            this.vin = Car.getNextVin();
+//            this._userGears = [ 'P', 'N', 'R', 'D' ];
+//            carProps.set( this, { userGear: this._userGears[ 0 ] } );
+//        }
+//        static areSimilar( car1, car2 ){
+//            return car1.make === car2.make && car1.model === car2.model;
+//        }
+//        static areSame( car1, car2 ){
+//            return car1.vin === car2.vin;
+//        }
+//        get userGear() { return carProps.get( this ).userGear; }
+//        set userGear( value ) {
+//            if( this._userGears.indexOf( value ) < 0 ) {
+//                throw new Error(`Invalid gear: ${ value }`);
+//            }
+//            carProps.get( this ).userGear = value;
+//            console.log( `gear is now ${ value }` );
+//        }
+//        shift( gear ){
+//            this.userGear = gear;
+//        }
+//    }
+//    Car.nextVin = 1;
+//    return Car;
+//})();
+//
+//const car1 = new Car('Tesla', 'S');
+//const car2 = new Car('Mazda', '3');
+//const car3 = new Car('Mazda', '3');
+//
+//
+//console.log( car1.vin );
+//console.log( car2.vin );
+//console.log( car3.vin );
+//
+//console.log( Car.areSame( car3, car2 ) );
+
+//car1.shift === Car.prototype.shift ? console.log( 'true' ) : console.log( 'false' );
+////console.log( car1.userGear );
+//car1.shift('D');
+////car1.shift('d');
+////car1.shift === car2.shift ? console.log( 'true' ) : console.log( 'false' );
+//car1.shift = function( gear ){ this.userGear = gear.toUpperCase() };
+//car1.shift === Car.prototype.shift ? console.log( 'true' ) : console.log( 'false' );
+
+////reduce!  It's a powerful map feature.
+//const words = [ 'Beachball',
+//    'Rodeo',
+//    'Angel',
+//    'Aardvark',
+//    'Xylophone',
+//    'November',
+//    'Chocolate',
+//    'Papaya',
+//    'Uniform',
+//    'Joker',
+//    'Clover',
+//    'Bali' ];
+//const alphabetical = words.reduce( ( a, x ) => {
+//    if( ! a[ x[ 0 ] ] ) a[ x[ 0 ] ] = [ ];
+//    a[ x[ 0 ]].push( x );
+//    return a;
+//}, {}  );
+//
+//console.log( 'alphabetical is', alphabetical );
+
+//let barry = new Array( 16 ).fill( 0 );
+//console.log( 'barry before digitty  map', barry );
+//const one_barry = barry.map( ()=>1);
+//console.log( 'maps can be used by smart-asses instead of fill to be abstruse', one_barry );
+//one_barry.fill( 'filler', 8 );
+//console.log( 'one_barry doing some filler...', one_barry );
+
+
+// filter it
+//const cards = [];
+//for( let suit of ['\u2665', '\u2663', '\u25c6', '\u2660'] ){
+//    for( let value = 1; value < 13; value++ ){
+//        cards.push( { suit, value } );
+//    }
+//}
+//
+//const face_enabled = cards.map( ( ( x )=>{
+//    switch( x.value ){
+//        case 1:
+//            x.value = 'A';
+//            break;
+//        case 10:
+//            x.value = 'J';
+//            break;
+//        case 11:
+//            x.value = 'Q';
+//            break;
+//        case 12:
+//            x.value = 'K';
+//            break;
+//        default:
+//            // shouldn't be here!
+//            break;
+//    }
+//    return { suit: x.suit, value: x.value };
+//} ) );
+//
+//console.log( 'ace_enabled is', face_enabled );
+//
+//const just_twos = cards.filter( c => c.value === 2 );
+//const just_kings = face_enabled.filter( c => c.value === 'K' );
+//console.log( just_twos );
+//console.log( just_kings );
+
+//// map it.
+//const items = [ 'hairbrush', 'Lexus' ];
+//const prices = [ 5, 50000 ];
+//console.log( 'items are', items, 'prices are', prices );
+//// no combine them into a super array
+//const new_arr = items.map( ( x, i ) => ( { item: x, price: prices[ i ] } )  );
+//console.log( 'new_arr is', new_arr );
+
+//const arr = [ 5, 7, 12, 15, 17.5, 36 ];
+//console.log( arr.some( x => x%2 === 0 ) );  // report if there any elements that are divisible by two
+////console.log( arr.some( x => Number.isInteger( Math.sqrt( x ) ) ) );  // is there a square, in there?
+//console.log( arr.every( x => Number.isInteger( x ) ) );  // test them all!
+
+//const arr = [ { name: 'Suzanne' }, { name: 'Victor' }, { name: 'Bob', age: 41 } ];
+////arr.sort( ( a, b ) => a.name < b.name ) ;
+//console.log( 'arr findIndex of Victor', arr.findIndex( o => o.name === 'Victor' ) );
+//console.log( 'arr findIndex of Suzanne', arr.findIndex( o => o.name === 'Suzanne' ) );
+//console.log( 'arr findIndex of age: 41', arr.findIndex( o => o.age === 41) );
+//console.log( 'the arr is now', arr );
+
+//let arr = ['a', 'b', 'c'];
+//let result = arr.concat( 4, 5, 6 ); // returns
+//console.log( 'result after concat is', result, 'and arr is now', arr );
+//arr = result.slice( -4, -3 );
+//console.log( 'arr after slice is', arr, 'and result is now', result );
+
+//const arr = ['a', 'b', 'c'];
+//let result = arr.push( 'e' );
+//console.log( 'result is', result, 'and arr is now', arr ); // returns the new value of array.length().
+//result = arr.pop(); // returns the value of the element popped
+//console.log( 'result after pop is', result, 'and arr is now', arr );
+//result = arr.shift(); // returns
+//console.log( 'result after shift is', result, 'and arr is now', arr );
+//result = arr.unshift('Z'); // returns
+//console.log( 'result after unshift is', result, 'and arr is now', arr );
+
+//const message = ( function(){
+//    const secret = "I'm a secret";
+//    return `The secret is ${ secret.length } characters long.`;
+//})();
+//console.log( message );
+//
+//const f = ( function(){
+//    let count = 0;
+//    return function(){
+//        return `I have been called ${ ++count } time(s)`;
+//    };
+//})();
+//console.log( f() );
+//console.log( f() );
+//console.log( f() );
+//console.log( f() );
+
+//{
+//    // outer block
+//    let x = { color: 'blue'};
+//    let y = x;
+//    let z = 3;
+//    {
+//        // inner block
+//        let x = 5;
+//        console.log( `x inner block is ${ x }`);
+//        console.log(y.color);
+//    }
+//    console.log( `x outer block after inner block is ${ x }`);
+//}
+//console.log( 'typeof x', typeof( x ));
+
+//let user = { name: 'Irena', age: 25 };
+//
+//function greet( user ){
+//    console.log(`Hello, ${ user.name }`);
+//}
+//function getBirthYear( user ){
+//    return new Date().getFullYear() - user.age;
+//}
+//
+//greet( user );
+//console.log( user.name, 'was born on or about', getBirthYear( user ) );
+
+//const bruce = { name: 'Bruce', age: '33' };
+//const madeline = { name: 'Madeline', age: '23' };
+//
+//function greet(){
+//    return `Hello, I'm ${ this.name }`;
+//}
+
+//console.log( greet() );  // failure
+//console.log( greet( bruce ) );  // failure
+//console.log( greet( madeline ) );  // failure
+//console.log( greet.call( bruce ) );
+//console.log( greet.call( madeline ) );
+
+// call is all about using a function as if it was a method
+// you then pass more arguments, if greet wants two arguments, greet.call( bruce, arg1, arg2 );
+
+//function updater( birth_year, occupation ){
+//    this.birth_year = birth_year;
+//    this.occupation = occupation;
+//}
+//
+//console.log( 'bruce is\n', bruce, '\nbefore updater' );
+//updater.call( bruce, 1949, 'architect' );
+//console.log( 'bruce is\n', bruce, '\nafter updater' );
+
+// apply is similar but arguments are passed as an array
+//console.log( Math.min.apply( null, arr ) );
+//console.log( Math.min.apply( bruce, arr ) ); // doing an apply to bruce at random cause don't matter
+//console.log( Math.min( arr ) );
+//console.log( Math.max.apply( null, arr ) );
+
+// es6 feature: block-scoped "let" declaration
+//const sentences = [
+//    { subject: 'JavaScript', verb: 'is', object: 'great' },
+//    { subject: 'Elephants', verb: 'are', object: 'large' }
+//];
+// es6 feature: object destructuring
+//function say( { subject, verb, object } ){
+//     es6 feature: template strings
+//    console.log( `${subject} ${verb} ${object}` );
+//    console.log( subject, verb, object );
+//}
+// es6 feature: for..of
+//for( let s of sentences ){
+//    say( s );
+//}
+
+//const now = new Date();
+//console.log( now.getTime() );
+//const numStr = '33.3';
+//const num = Number( numStr );
+//console.log( 'numStr is', numStr, 'num is', num );
+
+//for( let temp, i = 0, j = 1; j < 30; temp = i, i = j, j = i + temp ) console.log( j );
+
+//let s = '3';
+//for(; s.length < 10; s = ' ' + s );  // this actually a for loop!
+////console.log( `s is now: ${s}` );
+//
+//const player = { name: 'Thomas', rank: 'Midshipman', age:'25'};
+//for( let prop in player ){
+//    if( !player.hasOwnProperty( prop ) ) continue;  // important for objects you didn't create, omits the prototypes
+//    //console.log( prop + ': ' + player[ prop ] );
+//}
+
+// destructuring assignent,
+//const normal_obj = { b: 2, c: 3, d: 4 };
+//const { a, b, c } = normal_obj;
+//console.log('destructuring { b: 2, c: 3, d: 4 }');
+//console.log('a is', a);
+//console.log('b is', b);
+//console.log('c is', c);
+
+// destructuring assignent, arrays
+//const normal_arr = [ 'bob', 'dave', 14 ];
+//let [ guy, other_guy ] = normal_arr;
+//console.log( `guy is ${ guy } and other_guy is ${ other_guy }` );
+
+// add a degree sign, or any other unicode you wish:
+//const my_temp = 21.5;
+//const temp_msg = `my_temp is ${ my_temp }\u00b0C`;
+//const unicode_fun_msg = 'three-quarter is \u00be, wonderwoman is \u02ac, Jews say \u05dd\u05dc\u05e9' +
+//    '  dubsupset dubsubset \u22d0\u22d1, recycle \u2672, radioactive \u2622, beer! \u1f37a';
+//console.log( temp_msg );
+//console.log( unicode_fun_msg );
+//
+//function f( o ){
+//    o.messsage = 'set in f';
+//    o = {
+//        message: 'new object!'
+//    };
+//    console.log(`inside f: o.message = "${o.message}" (after assignment)`);
+//}
+//let o = {
+//    message: 'initial value'
+//};
+//console.log(`before calling f: o.message = "${o.message}"`);
+//f( o );
+//console.log(`after calling f: o.message = "${o.message}"`);
+//
+//function spread_em( ...bobs ){
+//    for( let i = 0; i < bobs.length; i++ ){
+//        console.log('and the bob is', bobs[ i ] );
+//    }
+//}
+//spread_em( 'tom', 'dick', 'harry', 100 );
+
+//function g( a, b = 'yowza!', c = 3 ){
+//    return `${ a } - ${ b } - ${ c }`;
+//}
+//function loggy( msg ){
+//    console.log( msg );
+//}
+//
+//loggy( g() );
+//loggy( g( 10, 20, 30 ) );
+//loggy( g( {},'not-yowza!', 'bob' ) );
+
+// ES6 function literal shorthand for methods:
+//const foo = {
+//  name: 'bar',
+//    say_name(){ console.log( 'my name is', this.name ); }
+//};
+//
+//foo.say_name();
+//
+//const f1 = () => 'hello';
+//console.log( 'f1 says', f1() );
+//
+//
+//const f2 = name => `${ name }`;
+//console.log( 'f2 says', f2( 'Banana') );
+//
+//const f3 = name => `Hello, you have passed ${ name } as an argment`;
+//console.log( f3( 'giraffe') );
+//
+//const f4 = ( a, b ) => a + b;
+//console.log( f4( 3, 4 ) );
+
+
+

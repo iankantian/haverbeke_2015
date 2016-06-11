@@ -1,0 +1,22 @@
+### Gitignore files
+
+# npm debugging logs
+npm-debug.log*
+
+# project dependencies
+node_modules
+
+# OSX folder attributes
+.DS_Store
+
+# temporary files
+*.tmp
+*~
+
+# no transpiled stuff on git
+dist
+public/dist
+
+
+# IntelliJ project files
+.idea
