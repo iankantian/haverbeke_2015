@@ -13,36 +13,37 @@
     }
 
     function begin() {
-        var plan = ["############################",
-            "#      #    #      o      ##",
-            "#                          #",
-            "#          #####           #",
-            "##         #   #    ##     #",
-            "###           ##     #     #",
-            "#           ###      #     #",
-            "#   ####                   #",
-            "#   ##       o             #",
-            "# o  #         o       ### #",
-            "#    #                     #",
-            "############################"];
+        var plan = [
+            '############################',
+            '#      #    #      o      ##',
+            '#                          #',
+            '#          #####           #',
+            '##         #   #    ##     #',
+            '###           ##     #     #',
+            '#           ###      #     #',
+            '#   ####                   #',
+            '#   ##       o             #',
+            '# o  #         o       ### #',
+            '#    #                     #',
+            '############################'];
 
-        var valley = new LifelikeWorld(
-            ["############################",
-                "#####                 ######",
-                "##   ***                **##",
-                "#   *##**         **  O  *##",
-                "#    ***     O    ##**    *#",
-                "#       O         ##***    #",
-                "#                 ##**     #",
-                "#   O       #*             #",
-                "#*          #**       O    #",
-                "#***        ##**    O    **#",
-                "##****     ###***       *###",
-                "############################"],
-            {"#": Wall,
-                "O": PlantEater,
-                "*": Plant}
-        );
+        //var valley = new LifelikeWorld(
+        //    ["############################",
+        //        "#####                 ######",
+        //        "##   ***                **##",
+        //        "#   *##**         **  O  *##",
+        //        "#    ***     O    ##**    *#",
+        //        "#       O         ##***    #",
+        //        "#                 ##**     #",
+        //        "#   O       #*             #",
+        //        "#*          #**       O    #",
+        //        "#***        ##**    O    **#",
+        //        "##****     ###***       *###",
+        //        "############################"],
+        //    {"#": Wall,
+        //        "O": PlantEater,
+        //        "*": Plant}
+        //);
 
 
         // A 2D Vector type
@@ -79,6 +80,98 @@
         Grid.prototype.set = function( vector, value ){
             this.space[ vector.x + this.width * vector.y ] = value;
         };
+
+        var directions = {
+            n: new Vector( 0, -1 ),
+            ne: new Vector( 1, -1 ),
+            e: new Vector( 1, 0 ),
+            se: new Vector( 1, 1 ),
+            s: new Vector( 0, 1 ),
+            sw: new Vector( -1, 1 ),
+            w: new Vector( -1, 0 ),
+            nw: new Vector( -1, -1 )
+        };
+
+        function randomElement( array ){
+            return array[ Math.floor( Math.random() * array.length ) ];
+        }
+
+        var directionNames = 'n ne se s sw w nw'.split(' '); // seems clever, but you could save a step var d = ['n', 'ne' ... ]
+
+        function BouncingCritter(){
+            this.direction = randomElement( directionNames );
+        }
+        BouncingCritter.prototype.act = function( view ){
+            if( view.look( this.direction ) != ' ' ){
+                this.direction = view.find( ' ' ) || 's';
+            }
+            return{ type: 'move', direction: this.direction };
+        };
+
+        function elementFromChar( legend, ch ){
+            if( ch == ' ' ){
+                return null;
+            }
+            var element = new legend[ ch ]();
+            element.originChar = ch;
+            return element;
+        }
+
+        function World( map, legend ){
+            var grid = new Grid( map[ 0 ].length, map.length );
+            this.grid = grid;
+            this.legend = legend;
+
+            map.forEach( function( line, y ){
+               for( var x = 0; x < line.length; x++ ){
+                   grid.set( new Vector( x, y ),
+                       elementFromChar( legend, line[ x ] ) );
+               }
+            });
+        }
+        World.prototype.toString = function() {
+            var output = '';
+            for (var y = 0; y < this.grid.height; y++) {
+                for (var x = 0; x < this.grid.width; x++) {
+                    var element = this.grid.get(new Vector(x, y));
+                    output += charFromElement(element);
+                }
+                output += '\n';
+            }
+            return output;
+        };
+        World.prototype.toDom = function() {
+            var output = '';
+            output += '<br>';
+            for ( var y = 0; y < this.grid.height; y++ ) {
+                for (var x = 0; x < this.grid.width; x++ ) {
+                    var element = this.grid.get( new Vector( x, y ) );
+                    var staging = charFromElement( element );
+                    output += ( staging == ' ' ) ? '&nbsp' : staging;
+                }
+                output += '<br>';
+            }
+            return output;
+        };
+
+        function Wall(){} // no methods, it just occupies space.
+
+        function charFromElement( element ){
+            if( element == null ){
+                return ' ';
+            }
+            else{
+                return element.originChar;
+            }
+        }
+
+        var world = new World( plan,{
+            '#': Wall,
+            'o': BouncingCritter
+        } );
+        console.log( world.toString() );
+        add_to_body( 'Behold the World!' + world.toDom() );
+
     }
 
     let document_ready = setInterval(function () {
