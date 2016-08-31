@@ -17,6 +17,70 @@
     }
 
     function begin() {
+        function charWidthCheck( div ){
+            // get width of Wide character, such as 'W'
+            var span = document.createElement('span');
+            span.innerHTML = '&#9608';
+            div.appendChild( span );
+            var wide = Math.floor( window.innerWidth / span.offsetWidth );
+            var high = Math.floor( window.innerHeight / span.offsetHeight );
+            span.parentNode.removeChild( span );
+            return { width: wide, height: high };
+        }
+        function worldMaker( legend, width, height ){
+            // extract an array of objects with the legend properties and probabilities
+            var gallery = [];
+            for( var prop in legend ) {
+                if ( legend.hasOwnProperty( prop ) ) {
+                    var oneProb = new legend[ prop ];
+                    gallery.push( { [ prop ] : oneProb.prob() } );
+                }
+            }
+            function mySort ( a, b ){
+                var A = '';
+                var B = '';
+                for( var propA in a ){
+                    if( a.hasOwnProperty( propA ) ){
+                        A = a[ propA ];
+                    }
+                }
+                for( var propB in b ){
+                    if( b.hasOwnProperty( propB ) ){
+                        B = b[ propB ];
+                    }
+                }
+                console.log( 'A, B', A, B );
+                return A > B;
+            }
+
+            function randFromLegend( probArray ){
+                var result = ' ';
+                var rand = Math.random();
+                var max = 1.0;
+                for( var i = 0; i < probArray.length; i++ ){
+                    for( var prop in probArray[ i ] ){
+                        if( probArray[ i ].hasOwnProperty( prop ) ){
+                            if( rand < probArray[ i ][ prop ] ){
+                                if( probArray[ i ][ prop ] < max ){
+                                    result = prop;
+                                    max = probArray[ i ][ prop ];
+                                }
+                            }
+                        }
+                    }
+                }
+                return result;
+            }
+            var world = [];
+            for( var h = 0; h < height; h++ ){
+                var row = '';
+                for( var w = 0; w < width; w++ ){
+                    row += randFromLegend( gallery );
+                }
+                world.push( row );
+            }
+            return world;
+        }
         var plan = [
             '############################',
             '#      #    #      o      ##',
@@ -171,14 +235,18 @@
             }
             return output;
         };
-        World.prototype.toDom = function() {
+        World.prototype.toDom = function( legend ) {
+            legend = legend ? legend : {
+                '#':'<span style="color:brown;">&#9619</span>',
+                'O':'&#37',
+                '*':'<span style="color:darkgreen;">&#165</span>' };
             var output = '';
             output += '<br>';
             for ( var y = 0; y < this.grid.height; y++ ) {
                 for (var x = 0; x < this.grid.width; x++ ) {
                     var element = this.grid.get( new Vector( x, y ) );
-                    var staging = charFromElement( element );
-                    output += ( staging == ' ' ) ? '&nbsp' : staging;
+                    var staging = legend[ charFromElement( element ) ];
+                    output += ( staging == ' ' || staging == undefined ) ? '&nbsp' : staging;
                 }
                 output += '<br>';
             }
@@ -239,7 +307,7 @@
             return randomElement( found );
         };
 
-        function Wall(){} // no methods, it just occupies space.
+        function Wall(){}
 
         function charFromElement( element ){
             if( element == null ){
@@ -336,11 +404,19 @@
                 return { type: 'move', direction: space };
         };
 
-        var world = new LifelikeWorld( valley, {
+        // defines the likelihoods that the given object will show up in the random map
+        Wall.prototype.prob = function(){ return .2; };
+        Plant.prototype.prob = function(){ return .05; };
+        PlantEater.prototype.prob = function(){ return .002; };
+
+        var legend = {
             '#': Wall,
             'O': PlantEater,
             '*': Plant
-        } );
+        };
+
+        var myWindow = charWidthCheck( document.getElementById( 'world' ) );
+        var world = new LifelikeWorld( worldMaker( legend, myWindow.width, myWindow.height, 50 ), legend  );
 
         function frame(){
             world.turn();
