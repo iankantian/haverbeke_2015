@@ -36,23 +36,6 @@
                     gallery.push( { [ prop ] : oneProb.prob() } );
                 }
             }
-            function mySort ( a, b ){
-                var A = '';
-                var B = '';
-                for( var propA in a ){
-                    if( a.hasOwnProperty( propA ) ){
-                        A = a[ propA ];
-                    }
-                }
-                for( var propB in b ){
-                    if( b.hasOwnProperty( propB ) ){
-                        B = b[ propB ];
-                    }
-                }
-                console.log( 'A, B', A, B );
-                return A > B;
-            }
-
             function randFromLegend( probArray ){
                 var result = ' ';
                 var rand = Math.random();
@@ -96,18 +79,18 @@
             '############################'];
 
         var valley = [
-            "############################",
-            "#####                 ######",
-            "##   **                 **##",
-            "#   *##**         **  O  *##",
-            "#    ***     O    ##**    *#",
-            "#       O         ##***    #",
-            "#                 ##**     #",
-            "#   O       #*             #",
-            "#*          #**       O    #",
-            "#***        ##**    O    **#",
-            "##****     ###***       *###",
-            "############################"
+            '############################',
+            '#####                 ######',
+            '##   **                 **##',
+            '#   *##**         **  O  *##',
+            '#    ***     O    ##**    *#',
+            '#       O         ##***    #',
+            '#                 ##**     #',
+            '#   O       #*             #',
+            '#*          #**       O    #',
+            '#***        ##**    O    **#',
+            '##****     ###***       *###',
+            '############################'
         ];
 
         // A 2D Vector type
@@ -405,7 +388,7 @@
         };
 
         // defines the likelihoods that the given object will show up in the random map
-        Wall.prototype.prob = function(){ return .2; };
+        Wall.prototype.prob = function(){ return .45; };
         Plant.prototype.prob = function(){ return .05; };
         PlantEater.prototype.prob = function(){ return .002; };
 
