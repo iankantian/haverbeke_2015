@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="main.css">
     <style>
         body{
+            overflow: hidden;
             background: rgb( 80, 80, 80 );
         }
         .background {
@@ -17,16 +18,19 @@
             padding: 0;
         }
         .lava {
-            background: rgb( 255, 100, 100 );
+            background: rgb( 255, 100, 100 ) url("media/images/minecraftLava.png");
         }
         .wall {
-            background: white;
+            background: white url("media/images/minecraftCobble.png");
+            background-size: contain;
         }
         .actor {
             position: absolute;
         }
         .coin {
             background: rgb( 241, 229, 89 );
+            border-radius: 40px;
+            border: 2px solid rgb(136, 109, 49);
         }
         .player {
             background: rgb( 64, 64, 64 );
@@ -42,11 +46,9 @@
             top: 50%;
             right: 0;
             left: 0;
-            margin: auto;
+            margin: 0 auto;
             transform: translateY(-50%);
             overflow: hidden;
-            width: 640px;
-            height: 480px;
         }
     </style>
     <script src="dist/main.js"></script>
@@ -54,7 +56,6 @@
 </head>
 
 <body>
-
 </body>
 
 </html>

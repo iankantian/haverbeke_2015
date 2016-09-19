@@ -2,15 +2,16 @@
  * Created by joshuabrown on 9/17/16.
  */
 function myApp(){
-    var scale = 20,
+    var scale,
+        targetAspectRatio = 30 / 23,
         maxStep = 0.05,
         wobbleSpeed = 8,
         wobbleDist = 0.07,
         playerXSpeed = 7,
         jumpSpeed = 17,
         gravity = 30,
-        arrowCodes = { 37: 'left', 38: 'up', 39: 'right'},
-        arrows;
+        controlCodes = { 37: 'left', 38: 'up', 39: 'right', 27: 'escape'},
+        controls;
 
 
     function elt( name, className ){
@@ -30,9 +31,30 @@ function myApp(){
                 event.preventDefault();
             }
         }
-        addEventListener( 'keydown', handler );
-        addEventListener( 'keyup', handler );
+        pressed.subscribe = function(){
+            addEventListener( 'keydown', handler );
+            addEventListener( 'keyup', handler );
+        };
+        pressed.unsubscribe = function(){
+            removeEventListener( 'keydown', handler );
+            removeEventListener( 'keyup', handler );
+        };
         return pressed;
+    }
+    function scaleLevel(){
+        var width = window.innerWidth;
+        var height = window.innerHeight;
+        var aspectRatio =  width / height;
+        if( aspectRatio > targetAspectRatio ){
+            scale = Math.floor( aspectRatio / targetAspectRatio * 25 );
+        }
+        else{
+            scale = Math.floor( targetAspectRatio / aspectRatio * 25 );
+        }
+        var game = document.getElementsByClassName('game')[ 0 ];
+        console.log( game );
+        game.style.width = Math.floor( scale * 20 * targetAspectRatio ) + 'px';
+        game.style.height = ( scale * 20 ) + 'px';
     }
 
     function runAnimation( frameFunc ){
@@ -102,8 +124,8 @@ function myApp(){
             "                                       xxxxxxxxxx!!x         x                                    o   o   o  x!x  ",
             "                                                xx!x         x     o   o                                    xx!x  ",
             "                                                 x!x         x                                xxxxxxxxxxxxxxx!!x  ",
-            "                                                 xvx         x     x   x                 !!!!!!!!!!!!!!!!!!!!!xx  ",
-            "                                                             xx  |   |   |  xx           !xxxxxxxxxxxxxxxxxxxxx   ",
+            "                                                 xvx         x     x   x                     !!!!!!!!!!!!!!!!!xx  ",
+            "                                                             xx  |   |   |  xx           xxxxxxxxxxxxxxxxxxxxxx   ",
             "                                                              xx!!!!!!!!!!!xx            v                        ",
             "                                                               xxxx!!!!!xxxx                                      ",
             "                                               x     x            xxxxxxx        xxx         xxx                  ",
@@ -323,9 +345,10 @@ function myApp(){
     Player.prototype.moveX = function( step, level, keys ){
         this.speed.x = 0;
         var motion, newPos, obstacle;
-        if( keys.left ) this.speed.x -= playerXSpeed;
-        if( keys.right ) this.speed.x += playerXSpeed;
-
+        if( level.status != 'lost' ){
+            if( keys.left ) this.speed.x -= playerXSpeed;
+            if( keys.right ) this.speed.x += playerXSpeed;
+        }
         motion = new Vector( this.speed.x * step, 0 );
         newPos = this.pos.plus( motion );
         obstacle = level.obstacleAt( newPos, this.size );
@@ -343,7 +366,7 @@ function myApp(){
         var obstacle = level.obstacleAt( newPos, this. size );
         if( obstacle ){
             level.playerTouched( obstacle );
-            if( keys.up && this.speed.y > 0 ){
+            if( keys.up && this.speed.y > 0 && level.status != 'lost' ){
                 this.speed.y = -jumpSpeed;
             }
             else{
@@ -422,6 +445,7 @@ function myApp(){
 
     function DOMDisplay( parent, level ){
         this.wrap = parent.appendChild( elt( 'div', 'game' ) );
+        scaleLevel();
         this.level = level;
         this.wrap.appendChild( this.drawBackground() );
         this.actorLayer = null;
@@ -461,7 +485,8 @@ function myApp(){
     DOMDisplay.prototype.scrollPlayerIntoView = function(){
         var width = this.wrap.clientWidth;
         var height = this.wrap.clientHeight;
-        var margin = width / 3;
+        var marginWidth = width / 3;
+        var marginHeight = height / 3;
         var left = this.wrap.scrollLeft;
         var right = left + width;
         var top = this.wrap.scrollTop;
@@ -469,32 +494,49 @@ function myApp(){
         var player = this.level.player;
         var center = player.pos.plus( player.size.times( 0.5 ) ).times( scale );
 
-        if( center.x < left + margin ){
-            this.wrap.scrollLeft = center.x - margin;
+        if( center.x < left + marginWidth ){
+            this.wrap.scrollLeft = center.x - marginWidth;
         }
-        else if( center.x > right - margin ){
-            this.wrap.scrollLeft = center.x + margin - width;
+        else if( center.x > right - marginWidth ){
+            this.wrap.scrollLeft = center.x + marginWidth - width;
         }
-        if( center.y < top + margin ){
-            this.wrap.scrollTop = center.y - margin;
+        if( center.y < top + marginHeight ){
+            console.log( 'scroll up', center.y );
+            this.wrap.scrollTop = center.y - marginHeight;
         }
-        else if( center.y > bottom - margin ){
-            this.wrap.scrollTop = center.y + margin - width;
+        else if( center.y > bottom - marginHeight ){
+            console.log( 'scroll down', center.y );
+            this.wrap.scrollTop = center.y + marginHeight - height;
         }
     };
     DOMDisplay.prototype.clear = function(){
         this.wrap.parentNode.removeChild( this.wrap );
     };
 
-    arrows = trackKeys( arrowCodes );
+    controls = trackKeys( controlCodes );
 
     function runLevel( level, Display, andThen ){
         var display = new Display( document.body, level );
+        var paused = false;
+        var pauseDelay = .5;
+        var remainingPauseDelay = 0;
+        controls.subscribe();
         runAnimation( function( step ){
-            level.animate( step, arrows );
+            if( !paused ){
+                level.animate( step, controls );
+            }
+            if( controls.escape ){
+                if( remainingPauseDelay <= 0 ){
+                    remainingPauseDelay = pauseDelay;
+                    paused = !paused;
+                }
+            }
+            remainingPauseDelay -= step;
+
             display.drawFrame( step );
             if( level.isFinished() ){
                 display.clear();
+                controls.unsubscribe();
                 if( andThen ){
                     andThen( level.status );
                 }
@@ -518,7 +560,7 @@ function myApp(){
                 }
             } );
         }
-        startLevel( 0 );
+        startLevel( 3 );
     }
 
     runGame( GAME_LEVELS , DOMDisplay );
