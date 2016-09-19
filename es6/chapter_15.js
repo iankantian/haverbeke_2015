@@ -10,7 +10,7 @@ function myApp(){
         playerXSpeed = 7,
         jumpSpeed = 17,
         gravity = 30,
-        controlCodes = { 37: 'left', 38: 'up', 39: 'right', 27: 'escape'},
+        controlCodes = { 37: 'left', 38: 'up', 39: 'right', 27: 'escape', 'jumpButton': 'up', 'leftArrow': 'left', 'rightArrow': 'right'},
         controls;
 
 
@@ -25,34 +25,45 @@ function myApp(){
         var pressed = Object.create( null );
         var down;
         function handler( event ){
-            if( codes.hasOwnProperty( event.keyCode )){
-                down = event.type == 'keydown';
-                pressed[ codes[ event.keyCode ] ] = down;
+            if( event.keyCode ) {
+                if (codes.hasOwnProperty( event.keyCode.toString() ) ) {
+                    down = event.type == 'keydown';
+                    pressed[ codes[ event.keyCode ] ] = down;
+                    event.preventDefault();
+                }
+            }
+            if( codes.hasOwnProperty( event.target.id ) ){
+                console.log( event );
+                down = event.type == 'touchstart';
+                pressed[ codes[ event.target.id ] ] = down;
                 event.preventDefault();
             }
         }
         pressed.subscribe = function(){
             addEventListener( 'keydown', handler );
             addEventListener( 'keyup', handler );
+            addEventListener( 'touchstart', handler );
+            addEventListener( 'touchend', handler );
         };
         pressed.unsubscribe = function(){
             removeEventListener( 'keydown', handler );
             removeEventListener( 'keyup', handler );
+            removeEventListener( 'touchstart', handler );
+            removeEventListener( 'touchend', handler );
         };
         return pressed;
     }
     function scaleLevel(){
+        var game = document.getElementsByClassName('game')[ 0 ];
         var width = window.innerWidth;
-        var height = window.innerHeight;
+        var height = parseInt( screen.height);
         var aspectRatio =  width / height;
-        if( aspectRatio > targetAspectRatio ){
-            scale = Math.floor( aspectRatio / targetAspectRatio * 25 );
+        if( aspectRatio < targetAspectRatio ){
+            scale = Math.floor( width / 30 );
         }
         else{
-            scale = Math.floor( targetAspectRatio / aspectRatio * 25 );
+            scale = Math.floor( height / 23 );
         }
-        var game = document.getElementsByClassName('game')[ 0 ];
-        console.log( game );
         game.style.width = Math.floor( scale * 20 * targetAspectRatio ) + 'px';
         game.style.height = ( scale * 20 ) + 'px';
     }
@@ -407,13 +418,13 @@ function myApp(){
         this.pos = pos;
         this.size = new Vector( 1, 1 );
         if( ch == '=' ){
-            this.speed = new Vector( 2, 0 );
+            this.speed = new Vector( 3, 0 );
         }
         else if( ch == '|' ){
             this.speed = new Vector( 0, 2 );
         }
         else if( ch == 'v' ){
-            this.speed = new Vector( 0, 3 );
+            this.speed = new Vector( 0, 2 );
             this.repeatPos = pos;
         }
     }
@@ -501,11 +512,9 @@ function myApp(){
             this.wrap.scrollLeft = center.x + marginWidth - width;
         }
         if( center.y < top + marginHeight ){
-            console.log( 'scroll up', center.y );
             this.wrap.scrollTop = center.y - marginHeight;
         }
         else if( center.y > bottom - marginHeight ){
-            console.log( 'scroll down', center.y );
             this.wrap.scrollTop = center.y + marginHeight - height;
         }
     };
